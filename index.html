@@ -635,6 +635,11 @@
                     pre: [["data-language"]],
                     div: [["className"]],
                 },
+                // プロトコル（スキーム）の許可リストに 'data' を追加
+                protocols: {
+                    ...defaultSchema.protocols,
+                    src: [...(defaultSchema.protocols?.src || []), "data"],
+                },
                 clobberPrefix: "",
             })
             .use(rehypeKatex)
@@ -728,6 +733,45 @@
 
         editor.session.on('change', debouncedRender);
         render();
+
+        // 画像ファイルのドラッグアンドドロップ対応
+
+        // エディターの DOM 要素を取得
+        const editorDiv = document.getElementById("editor");
+
+        // 1. ブラウザ標準の挙動（ファイルを開く）を無効化
+        ['dragover', 'drop'].forEach(eventName => {
+            editorDiv.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        // 2. ドロップ時の処理
+        editorDiv.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files && files.length > 0) {
+                Array.from(files).forEach(file => {
+                    // 画像ファイルのみ受け付ける
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+
+                        reader.onload = (event) => {
+                            const base64Data = event.target.result;
+                            const imageMarkdown = `\n![${file.name}](${base64Data})\n`;
+
+                            // エディターの現在のカーソル位置に挿入
+                            const cursor = editor.getCursorPosition();
+                            editor.session.insert(cursor, imageMarkdown);
+                        };
+
+                        reader.readAsDataURL(file); // ファイルを Base64 文字列として読み込み
+                    }
+                });
+            }
+        }, false);
 
     </script>
 </head>
