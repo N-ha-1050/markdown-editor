@@ -480,9 +480,18 @@
             name: 'saveLocalstorage',
             bindKey: { win: 'Ctrl-S', mac: 'Command-S' },
             exec: function (editor) {
-                const content = editor.getValue();
-                localStorage.setItem('content', content);
-                alert('内容をローカルストレージに保存しました。');
+                const content = localStorage.getItem('content');
+                const currentContent = editor.getValue();
+                if (currentContent !== content) {
+                    if (content !== null) {
+                        const confirmResult = confirm('ローカルストレージに内容を保存しようとしています。現在の内容は上書きされますが続行しますか？');
+                        if (!confirmResult) {
+                            return;
+                        }
+                    }
+                    localStorage.setItem('content', currentContent);
+                    alert('内容をローカルストレージに保存しました。');
+                }
             },
             readOnly: true
         });
@@ -506,6 +515,23 @@
                 }
             },
             readOnly: false
+        })
+        editor.commands.addCommand({
+            name: 'clearLocalstorage',
+            bindKey: { win: 'Ctrl-R', mac: 'Command-R' },
+            exec: function (editor) {
+                const content = localStorage.getItem('content');
+                if (content !== null) {
+                    const confirmResult = confirm('ローカルストレージの内容を削除しようとしています。続行しますか？');
+                    if (confirmResult) {
+                        localStorage.removeItem('content');
+                        alert('ローカルストレージの内容を削除しました。');
+                    }
+                } else {
+                    alert('ローカルストレージに保存された内容が見つかりません。');
+                }
+            },
+            readOnly: true
         })
 
         // ダークモード対応
