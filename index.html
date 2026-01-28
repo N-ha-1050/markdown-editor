@@ -605,6 +605,41 @@
             dialogTab.close(`${useSoftTabs}:${tabSize}`);
         });
 
+        // 自作の画像属性抽出プラグイン
+        function remarkImageAttributes() {
+            return (tree) => {
+                // tree を走査して image ノードを探す
+                const { visit } = {
+                    visit: (node, type, handler) => {
+                        if (node.type === type) handler(node);
+                        if (node.children) node.children.forEach(c => visit(c, type, handler));
+                    }
+                };
+
+                visit(tree, 'image', (node) => {
+                    const alt = node.alt || '';
+                    // width と height を正規表現で探す
+                    const widthMatch = alt.match(/width:(\d+(px|%)?)/);
+                    const heightMatch = alt.match(/height:(\d+(px|%)?)/);
+
+                    if (widthMatch || heightMatch) {
+                        node.data = node.data || {};
+                        node.data.hProperties = node.data.hProperties || {};
+
+                        if (widthMatch) {
+                            node.data.hProperties.width = widthMatch[1];
+                            // alt から属性指定用の文字列を消して、純粋な alt だけにする
+                            node.alt = node.alt.replace(widthMatch[0], '').trim();
+                        }
+                        if (heightMatch) {
+                            node.data.hProperties.height = heightMatch[1];
+                            node.alt = node.alt.replace(heightMatch[0], '').trim();
+                        }
+                    }
+                });
+            };
+        }
+
         // Processor の設定
         const markHastProcessor = remark()
             .use(remarkPresetLintRecommended)
@@ -624,6 +659,7 @@
             .use(remarkCjkFriendly)
             .use(remarkCjkFriendlyGfmStrikethrough)
             .use(remarkFlexibleToc)
+            .use(remarkImageAttributes)
             .use(remarkRehype, { handlers: { ...defListHastHandlers }, footnoteLabel: "脚注", clobberPrefix: "" })
             .use(rehypeSlug)
             .use(rehypePreLanguage, "data-language")
