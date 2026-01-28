@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Editor</title>
+    <link rel="icon" href="https://icon.n-ha.jp/svg/circle.svg" />
+
+    <!-- フォント -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans+JP:wght@100..900&family=Noto+Sans+Math&family=Noto+Sans+Mono:wght@100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Noto+Serif+JP:wght@200..900&family=Noto+Serif:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+
+    <!-- highlight.js は module.js 内でモードに応じたテーマを読み込み -->
+    <link id="highlight-theme" rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.0/styles/github.min.css">
+
+    <style>
+        :root {
+            /* Fonts */
+            --font-sans: "Noto Sans", "Noto Sans JP", "Noto Sans Emoji", "Noto Sans Math", ui-sans-serif, sans-serif;
+            --font-serif: "Noto Serif", "Noto Serif JP", ui-serif, serif;
+            --font-mono: "Noto Mono", ui-monospace, monospace;
+
+            --color-code-background: lightgray;
+            --color-text-weak: black;
+            --color-inserted-line: #f0fff4;
+            --color-deleted-line: #ffeef0;
+            --color-highlighted-line: lightskyblue;
+            --color-highlighted-line-indicator: blue;
+
+            --color-code-titlebar: dodgerblue;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                background-color: #002244;
+                color: white;
+
+                --color-code-background: darkgray;
+                --color-text-weak: white;
+                --color-inserted-line: #033a16;
+                --color-deleted-line: #67060c;
+                --color-highlighted-line: midnightblue;
+            }
+
+            textarea {
+                background-color: black;
+                color: white;
+            }
+
+            a {
+                color: lightblue;
+            }
+
+            a:visited {
+                color: violet;
+            }
+        }
+
+        body {
+            font-family: var(--font-sans);
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        textarea,
+        pre,
+        code {
+            font-family: var(--font-mono);
+        }
+
+        /* Section1: Title */
+        #title {
+            height: 10vh;
+        }
+
+        #title h1 {
+            font-size: 5vh;
+            margin: 0;
+            padding: 1.25vh;
+            text-align: center;
+        }
+
+        /* Section2: Editor */
+        #editor {
+            position: absolute;
+            box-sizing: border-box;
+            width: 50vw;
+            height: 70vh;
+        }
+
+        /* Section3: Info */
+        #info {
+            position: absolute;
+            box-sizing: border-box;
+
+            top: 80vh;
+            width: 50vw;
+            height: 5vh;
+            padding: 0 1rem;
+
+            background-color: black;
+            color: white;
+
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        #info button.info-item {
+            border: none;
+            background: transparent;
+        }
+
+        #info .info-item {
+            box-sizing: border-box;
+
+            font-size: 2vh;
+            margin: 0;
+            padding: 1vh;
+
+            color: white;
+        }
+
+        #info .info-item:hover {
+            background-color: dimgray;
+            cursor: pointer;
+        }
+
+        #info .info-item:focus-visible {
+            z-index: 1;
+            outline: 2px solid skyblue;
+        }
+
+        /* Section4: Preview */
+        #preview {
+            position: absolute;
+            box-sizing: border-box;
+
+            top: 10vh;
+            left: 50vw;
+            width: 40vw;
+            height: 75vh;
+
+            border: 1px solid dimgray;
+            overflow: auto;
+            padding: 1rem;
+            white-space: nowrap;
+        }
+
+        #preview a {
+            text-decoration: none;
+        }
+
+        #preview a:hover {
+            text-decoration: underline;
+        }
+
+        /* highlight.js styles */
+
+        .parent-container-of-pre {
+            display: grid;
+            /* in order { overflow-x: auto; } works in child <pre> */
+        }
+
+        pre,
+        pre code {
+            background-color: var(--color-code-background);
+
+            direction: ltr;
+            text-align: left;
+            white-space: pre;
+            word-spacing: normal;
+            word-break: normal;
+            line-height: 1.2;
+            tab-size: 2;
+            hyphens: none;
+        }
+
+        pre {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--color-text-weak);
+            border-radius: 5px;
+
+            overflow-x: auto;
+        }
+
+        pre>code {
+            float: left;
+            min-width: 100%;
+        }
+
+        .code-line {
+            min-width: 100%;
+            padding-left: 12px;
+            padding-right: 12px;
+            margin-left: -12px;
+            margin-right: -12px;
+            border-left: 4px solid transparent;
+            /* prepare for highlighted code-lines */
+
+            display: inline-block;
+        }
+
+        .code-line.inserted {
+            background-color: var(--color-inserted-line);
+            /* inserted code-line (+) */
+        }
+
+        .code-line.deleted {
+            background-color: var(--color-deleted-line);
+            /* deleted code-line (-) */
+        }
+
+        .highlighted-code-line {
+            background-color: var(--color-highlighted-line);
+            border-left: 4px solid var(--color-highlighted-line-indicator);
+        }
+
+        .numbered-code-line::before {
+            content: attr(data-line-number);
+
+            margin-left: -8px;
+            margin-right: 16px;
+            width: 1rem;
+            color: var(--color-text-weak);
+            text-align: right;
+
+            display: inline-block;
+        }
+
+        /* custom highlight.js settings */
+
+        .remark-code-container {
+            position: relative;
+        }
+
+        .remark-code-container pre {
+            margin-top: 0;
+        }
+
+        pre code.hljs {
+            box-sizing: border-box;
+        }
+
+        pre::before {
+            position: absolute;
+            content: attr(data-language);
+            background-color: dodgerblue;
+            padding: 0.25rem;
+            right: 17px;
+        }
+
+        .code-line {
+            margin-left: -16px;
+            margin-right: -16px;
+            border-right: 4px solid transparent;
+        }
+
+        .remark-code-title {
+            padding: 2px 0 4px 1rem;
+            color: var(--color-text-weak);
+            font-size: 95%;
+            background-color: var(--color-code-titlebar);
+            border: 1px solid var(--color-text-weak);
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+
+        .remark-code-title+pre {
+            border-top: none;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+
+        /* Section5: Panel */
+        #panel {
+            position: absolute;
+            box-sizing: border-box;
+
+            top: 85vh;
+            width: 100vw;
+            height: 15vh;
+
+            background-color: black;
+            color: white;
+            border: 1px solid dimgray;
+        }
+
+        #panel-tabs {
+            box-sizing: border-box;
+
+            height: 5vh;
+            width: fit-content;
+            padding: 0 1rem;
+
+            display: flex;
+        }
+
+        .panel-content {
+            box-sizing: border-box;
+
+            width: 100vw;
+            height: 10vh;
+
+            border: none;
+
+            display: none;
+        }
+
+        textarea.panel-content {
+            background-color: black;
+            color: white;
+
+            padding: 1rem;
+            resize: none;
+        }
+
+        /* タブとパネルの対応関係 */
+        #panel-tabs:has(input#panel-tabs-lint-input:checked)~#panel-lint,
+        #panel-tabs:has(input#panel-tabs-metadata-input:checked)~#panel-metadata,
+        #panel-tabs:has(input#panel-tabs-plaintext-input:checked)~#panel-plaintext {
+            display: block;
+        }
+
+        /* ラジオボタンを非表示にする（display:none はアクセシビリティの観点から使用しない） */
+        input.panel-tabs-item-input {
+            border: 0 !important;
+            clip: rect(0, 0, 0, 0) !important;
+            height: 1px !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            padding: 0 !important;
+            position: absolute !important;
+            white-space: nowrap !important;
+            width: 1px !important;
+        }
+
+        /* タブのラベル */
+        .panel-tabs-item {
+            font-size: 2vh;
+            padding: 0;
+            margin: 1vh;
+            border: 0;
+            border-bottom: 1px solid transparent;
+            color: gray;
+        }
+
+        /* ホバー時: 文字色のみ変更 */
+        .panel-tabs-item:hover {
+            cursor: pointer;
+            color: white;
+        }
+
+        /* キーボードによるフォーカス時: アウトラインを表示 */
+        #panel-tabs:has(input.panel-tabs-item-input:focus-visible) {
+            outline: 2px solid skyblue;
+        }
+
+        /* 選択時: 下線と文字色を変更 */
+        .panel-tabs-item:has(input.panel-tabs-item-input:checked) {
+            border-bottom: 1px solid skyblue;
+            color: white;
+        }
+
+        /* Section6: Toc */
+        #toc {
+            position: absolute;
+            box-sizing: border-box;
+
+            top: 10vh;
+            left: 90vw;
+            width: 10vw;
+            height: 75vh;
+            padding: 0;
+
+            /* background-color: black; */
+            border: 1px solid dimgray;
+
+            overflow-wrap: anywhere;
+            overflow-y: auto;
+        }
+
+        #toc ul {
+            list-style-type: none;
+            padding-left: 0.5rem;
+        }
+
+        #toc ul li {
+            margin-top: 0.5rem;
+        }
+
+        /* Section7: Dialog */
+        #dialog dialog {
+            border-radius: 0.5rem;
+        }
+
+        #dialog button:focus-visible {
+            outline: 2px solid skyblue;
+        }
+
+        #dialog button.submit-button {
+            background-color: dodgerblue;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            padding: 0.5rem 1rem;
+            margin-right: 1rem;
+        }
+
+        #dialog button.cancel-button {
+            background-color: dimgray;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            padding: 0.5rem 1rem;
+        }
+    </style>
+    <script type="module">
+        import ace from 'https://esm.run/ace-builds@1'
+        import rehypeHighlight from "https://esm.sh/rehype-highlight@6?bundle";
+        import rehypeHighlightLines from "https://esm.sh/rehype-highlight-code-lines@1?bundle";
+        import rehypeKatex from "https://esm.sh/rehype-katex@7?bundle";
+        import rehypeMermaid from "https://esm.sh/rehype-mermaid@3";
+        import rehypePreLanguage from "https://esm.sh/rehype-pre-language@1?bundle";
+        import rehypeSanitize, {
+            defaultSchema,
+        } from "https://esm.sh/rehype-sanitize@6?bundle";
+        import rehypeSlug from "https://esm.sh/rehype-slug@6?bundle";
+        import rehypeStringify from "https://esm.sh/rehype-stringify@10?bundle";
+        import { remark } from "https://esm.sh/remark@15?bundle";
+        import remarkBreaks from "https://esm.sh/remark-breaks@4?bundle";
+        import remarkCjkFriendly from "https://esm.sh/remark-cjk-friendly@2?bundle";
+        import remarkCjkFriendlyGfmStrikethrough from "https://esm.sh/remark-cjk-friendly-gfm-strikethrough@2?bundle";
+        import {
+            defListHastHandlers,
+            remarkDefinitionList,
+        } from "https://esm.sh/remark-definition-list@2?bundle";
+        import remarkCodeTitles from "https://esm.sh/remark-flexible-code-titles@1?bundle";
+        import remarkFlexibleToc from "https://esm.sh/remark-flexible-toc@1?bundle";
+        import remarkFrontmatter from "https://esm.sh/remark-frontmatter@5?bundle";
+        import remarkGfm from "https://esm.sh/remark-gfm@4?bundle";
+        import remarkGithub from "https://esm.sh/remark-github@12?bundle";
+        import remarkMath from "https://esm.sh/remark-math@6?bundle";
+        import remarkPresetLintConsistent from "https://esm.sh/remark-preset-lint-consistent@6?bundle";
+        import remarkPresetLintMarkdownStyleGuide from "https://esm.sh/remark-preset-lint-markdown-style-guide@6?bundle";
+        import remarkPresetLintRecommended from "https://esm.sh/remark-preset-lint-recommended@7?bundle";
+        import remarkRehype from "https://esm.sh/remark-rehype@11?bundle";
+        import remarkToc from "https://esm.sh/remark-toc@9?bundle";
+        import stripMarkdown from "https://esm.sh/strip-markdown@6?bundle";
+        import { matter } from "https://esm.sh/vfile-matter@5?bundle";
+        import { reporter } from "https://esm.sh/vfile-reporter@8?bundle";
+
+        // Ace Settings
+        ace.config.set('basePath', 'https://cdn.jsdelivr.net/npm/ace-builds@1/src-noconflict/');
+
+        // Preview Styles
+        const lightHref =
+            "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.0/styles/github.min.css";
+        const darkHref =
+            "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.0/styles/github-dark.min.css";
+
+        // Editor Settings
+        const editor = ace.edit("editor")
+        editor.session.setMode("ace/mode/markdown");
+        editor.session.setUseSoftTabs(true);
+        editor.setKeyboardHandler("ace/keyboard/vscode");
+        editor.commands.addCommand({
+            name: 'saveLocalstorage',
+            bindKey: { win: 'Ctrl-S', mac: 'Command-S' },
+            exec: function (editor) {
+                const content = editor.getValue();
+                localStorage.setItem('content', content);
+                alert('内容をローカルストレージに保存しました。');
+            },
+            readOnly: true
+        });
+        editor.commands.addCommand({
+            name: 'loadLocalstorage',
+            bindKey: { win: 'Ctrl-O', mac: 'Command-O' },
+            exec: function (editor) {
+                const content = localStorage.getItem('content');
+                if (content !== null) {
+                    const currentContent = editor.getValue();
+                    if (currentContent !== "" && currentContent !== content) {
+                        const confirmResult = confirm('ローカルストレージから内容を読み込もうとしています。現在の内容は失われますが続行しますか？');
+                        if (!confirmResult) {
+                            return;
+                        }
+                    }
+                    editor.setValue(content, -1);
+                    alert('ローカルストレージから内容を読み込みました。');
+                } else {
+                    alert('ローカルストレージに保存された内容が見つかりません。');
+                }
+            },
+            readOnly: false
+        })
+
+        // ダークモード対応
+        const highlightThemeLink = document.getElementById("highlight-theme");
+        const media = window.matchMedia("(prefers-color-scheme: dark)");
+        function applyTheme() {
+            editor.setTheme(media.matches ? "ace/theme/github_dark" : "ace/theme/github");
+            highlightThemeLink.href = media.matches ? darkHref : lightHref;
+        }
+        media.addEventListener('change', applyTheme);
+        applyTheme();
+
+        // カーソル位置の表示
+        const infoPositionButton = document.getElementById('info-position');
+        function updateInfoPosition() {
+            const position = editor.getCursorPosition();
+            infoPositionButton.textContent = `行: ${position.row + 1}, 列: ${position.column + 1}`;
+        }
+        editor.session.selection.on('changeCursor', updateInfoPosition);
+        updateInfoPosition();
+
+        // カーソル位置の変更
+        const dialogPosition = document.getElementById('dialog-position');
+        infoPositionButton.addEventListener("click", () => {
+            dialogPosition.showModal();
+        })
+        dialogPosition.addEventListener("close", (event) => {
+            const value = dialogPosition.returnValue;
+
+            if (!value) {
+                editor.focus();
+                return;
+            }
+
+            const parts = value.split(":");
+            const row = parseInt(parts[0].trim(), 10) - 1;
+            const column = parts.length >= 2 ? parseInt(parts[1].trim(), 10) - 1 : 0;
+
+            if (!isNaN(row) && !isNaN(column)) {
+                editor.gotoLine(row + 1, column);
+            }
+
+            editor.focus();
+        })
+
+        const dialogPositionSubmit = document.getElementById('dialog-position-submit');
+        const dialogPositionInput = document.getElementById('dialog-position-input');
+        dialogPositionSubmit.addEventListener("click", (event) => {
+            event.preventDefault();
+            dialogPosition.close(dialogPositionInput.value);
+            dialogPositionInput.value = "";
+        });
+
+        // タブ情報の表示
+        const infoTabButton = document.getElementById('info-tab');
+        const dialogTabCheck = document.getElementById('dialog-tab-check');
+        const dialogTabInput = document.getElementById('dialog-tab-input');
+        function updateTabInfo() {
+            const tabSize = editor.session.getTabSize();
+            const useSoftTabs = editor.session.getUseSoftTabs();
+            infoTabButton.textContent = `${useSoftTabs ? 'スペース' : 'タブ'}: ${tabSize}`;
+            dialogTabInput.value = tabSize;
+            dialogTabCheck.checked = useSoftTabs;
+        }
+        editor.session.on('changeTabSize', updateTabInfo);
+        updateTabInfo();
+
+        // タブ情報の変更
+        const dialogTab = document.getElementById('dialog-tab');
+        infoTabButton.addEventListener("click", () => {
+            dialogTab.showModal();
+        })
+        dialogTab.addEventListener("close", (event) => {
+            const value = dialogTab.returnValue;
+
+            if (!value) {
+                editor.focus();
+                return;
+            }
+
+            const [useSoftTabsValue, tabSizeValue] = value.split(":");
+            const useSoftTabs = useSoftTabsValue === "true";
+            editor.session.setUseSoftTabs(useSoftTabs);
+            const tabSize = parseInt(tabSizeValue, 10);
+            if (!isNaN(tabSize)) {
+                editor.session.setTabSize(tabSize);
+            }
+            editor.focus();
+            updateTabInfo();
+        })
+
+        const dialogTabSubmit = document.getElementById('dialog-tab-submit');
+        dialogTabSubmit.addEventListener("click", (event) => {
+            event.preventDefault();
+            const useSoftTabs = dialogTabCheck.checked;
+            const tabSize = dialogTabInput.value;
+            dialogTab.close(`${useSoftTabs}:${tabSize}`);
+        });
+
+        // Processor の設定
+        const markHastProcessor = remark()
+            .use(remarkPresetLintRecommended)
+            .use(remarkPresetLintConsistent)
+            .use(remarkPresetLintMarkdownStyleGuide)
+            .use(remarkFrontmatter)
+            .use(() => ((_, file) => { matter(file) }))
+            .use(remarkGfm)
+            .use(remarkGithub, {
+                repository: "N-ha-1050/N-ha-1050",
+            })
+            .use(remarkToc, { heading: "目次" })
+            .use(remarkBreaks)
+            .use(remarkDefinitionList)
+            .use(remarkCodeTitles)
+            .use(remarkMath)
+            .use(remarkCjkFriendly)
+            .use(remarkCjkFriendlyGfmStrikethrough)
+            .use(remarkFlexibleToc)
+            .use(remarkRehype, { handlers: { ...defListHastHandlers }, footnoteLabel: "脚注", clobberPrefix: "" })
+            .use(rehypeSlug)
+            .use(rehypePreLanguage, "data-language")
+            .use(rehypeSanitize, {
+                ...defaultSchema,
+                attributes: {
+                    ...defaultSchema.attributes,
+                    // The `language-*` regex is allowed by default.
+                    code: [["className", /^language-./, "math-inline", "math-display"]],
+                    pre: [["data-language"]],
+                    div: [["className"]],
+                },
+                clobberPrefix: "",
+            })
+            .use(rehypeKatex)
+            .use(rehypeMermaid)
+            .use(rehypeHighlight)
+            .use(rehypeHighlightLines)
+            .use(rehypeStringify)
+        const markTextProcessor = remark()
+            .use(remarkFrontmatter)
+            .use(remarkGfm)
+            .use(remarkGithub, {
+                repository: "N-ha-1050/N-ha-1050",
+            })
+            .use(remarkToc, { heading: "目次" })
+            .use(remarkBreaks)
+            .use(remarkDefinitionList)
+            .use(remarkMath)
+            .use(remarkCjkFriendly)
+            .use(remarkCjkFriendlyGfmStrikethrough)
+            .use(stripMarkdown)
+        const previewDiv = document.getElementById("preview");
+        const panelLintTextarea = document.getElementById("panel-lint");
+        const panelMetadataTextarea = document.getElementById("panel-metadata");
+        const panelPlaintextTextarea = document.getElementById("panel-plaintext");
+        const tocListDiv = document.getElementById("toc-list");
+
+        // 目次の階層構造を生成する関数
+        function buildTocHtml(tocItems) {
+            if (!tocItems || tocItems.length === 0) return '';
+
+            let html = '';
+            let currentDepth = 0;
+
+            tocItems.forEach((item, index) => {
+                const { value, href, depth } = item;
+
+                // 深さが増えた場合、新しい<ul>を開始
+                while (currentDepth < depth) {
+                    html += '<ul>';
+                    currentDepth++;
+                }
+
+                // 深さが減った場合、<ul>を閉じる
+                while (currentDepth > depth) {
+                    html += '</ul>';
+                    currentDepth--;
+                }
+
+                // リストアイテムを追加
+                html += `<li><a href="${href}">${value}</a>`;
+
+                // 次のアイテムの深さをチェック
+                const nextItem = tocItems[index + 1];
+                if (!nextItem || nextItem.depth <= depth) {
+                    html += '</li>';
+                }
+            });
+
+            // 残りの<ul>タグを閉じる
+            while (currentDepth > 0) {
+                html += '</ul>';
+                currentDepth--;
+            }
+
+            return html;
+        }
+
+        // レンダリング関数
+        async function render() {
+            const inputText = editor.getValue();
+            const hast = await markHastProcessor.process(inputText);
+            const textVfile = await markTextProcessor.process(inputText);
+
+            previewDiv.innerHTML = hast.toString();
+            panelLintTextarea.value = reporter(hast);
+            panelMetadataTextarea.value = JSON.stringify(hast.data.matter, null, 2);
+            panelPlaintextTextarea.value = textVfile.toString();
+            tocListDiv.innerHTML = buildTocHtml(hast.data.toc);
+        }
+        editor.session.on('change', render);
+        render();
+
+    </script>
+</head>
+
+<body>
+
+    <!-- Section1: Title -->
+    <div id="title">
+        <h1>Markdown Editor</h1>
+    </div>
+
+    <!-- Section2: Editor -->
+    <div id="editor"></div>
+
+    <!-- Section3: Info -->
+    <div id="info">
+        <button id="info-position" class="info-item" aria-label="カーソル位置"></button>
+        <button id="info-tab" class="info-item" aria-label="タブ"></button>
+    </div>
+
+    <!-- Section4: Preview -->
+    <div id="preview"></div>
+
+    <!-- Section5: Panel -->
+    <div id="panel">
+        <div id="panel-tabs">
+            <label for="panel-tabs-lint-input" class="panel-tabs-item" id="panel-tabs-lint">
+                <input type="radio" name="panel-tabs" id="panel-tabs-lint-input" class="panel-tabs-item-input" checked>
+                Lint
+            </label>
+            <label for="panel-tabs-metadata-input" class="panel-tabs-item" id="panel-tabs-metadata">
+                <input type="radio" name="panel-tabs" id="panel-tabs-metadata-input" class="panel-tabs-item-input">
+                Metadata
+            </label>
+            <label for="panel-tabs-plaintext-input" class="panel-tabs-item" id="panel-tabs-plaintext">
+                <input type="radio" name="panel-tabs" id="panel-tabs-plaintext-input" class="panel-tabs-item-input">
+                Plain Text
+            </label>
+        </div>
+        <textarea name="panel-lint" id="panel-lint" class="panel-content" aria-labelledby="panel-tabs-lint"
+            disabled></textarea>
+        <textarea name="panel-metadata" id="panel-metadata" class="panel-content" aria-labelledby="panel-tabs-metadata"
+            disabled></textarea>
+        <textarea name="panel-plaintext" id="panel-plaintext" class="panel-content"
+            aria-labelledby="panel-tabs-plaintext" disabled></textarea>
+    </div>
+
+    <!-- Section6: Toc -->
+    <div id="toc">
+        <h2>目次</h2>
+        <div id="toc-list"></div>
+    </div>
+
+    <!-- Section7: Dialog -->
+    <div id="dialog">
+        <dialog id="dialog-position" aria-label="カーソル位置変更ダイアログ" closedby="any">
+            <form>
+                <p>
+                    <label for="dialog-position-input">カーソル位置を入力してください。</label>
+                    <input type="text" id="dialog-position-input" autofocus placeholder="行:列 (例: 3:5)">
+                </p>
+                <div>
+                    <button id="dialog-position-submit" type="submit" class="submit-button">確認</button>
+                    <button formmethod="dialog" class="cancel-button">キャンセル</button>
+                </div>
+            </form>
+        </dialog>
+        <dialog id="dialog-tab" aria-label="タブサイズ変更ダイアログ" closedby="any">
+            <form>
+                <p>
+                    <input type="checkbox" id="dialog-tab-check">
+                    <label for="dialog-tab-check">スペースによるインデント</label>
+                </p>
+                <p>
+                    <label for="dialog-tab-input">タブサイズを入力してください。</label>
+                    <input type="number" id="dialog-tab-input" min="1" max="8" autofocus>
+                </p>
+                <div>
+                    <button id="dialog-tab-submit" type="submit" class="submit-button">確認</button>
+                    <button formmethod="dialog" class="cancel-button">キャンセル</button>
+                </div>
+            </form>
+        </dialog>
+    </div>
+</body>
+
+</html>
