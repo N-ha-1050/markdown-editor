@@ -460,6 +460,7 @@
         import stripMarkdown from "https://esm.sh/strip-markdown@6?bundle";
         import { matter } from "https://esm.sh/vfile-matter@5?bundle";
         import { reporter } from "https://esm.sh/vfile-reporter@8?bundle";
+        import morphdom from "https://esm.sh/morphdom@2?bundle";
 
         // Ace Settings
         ace.config.set('basePath', 'https://cdn.jsdelivr.net/npm/ace-builds@1/src-noconflict/');
@@ -713,7 +714,15 @@
             const hast = await markHastProcessor.process(inputText);
             const textVfile = await markTextProcessor.process(inputText);
 
-            previewDiv.innerHTML = hast.toString();
+            // 1. 新しいHTML文字列を取得
+            const newHtml = hast.toString();
+
+            // 2. morphdom で差分更新
+            // previewDiv（現在のDOM）を newHtml（新しい状態）に変形させる
+            morphdom(previewDiv, `<div>${newHtml}</div>`, {
+                childrenOnly: true // previewDiv 自体は残し、中身の要素だけを更新対象にする
+            });
+
             panelLintTextarea.value = reporter(hast);
             panelMetadataTextarea.value = JSON.stringify(hast.data.matter, null, 2);
             panelPlaintextTextarea.value = textVfile.toString();
