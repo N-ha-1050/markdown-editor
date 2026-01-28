@@ -714,7 +714,19 @@
             panelPlaintextTextarea.value = textVfile.toString();
             tocListDiv.innerHTML = buildTocHtml(hast.data.toc);
         }
-        editor.session.on('change', render);
+        // 高頻度な実行を抑えるためのユーティリティ関数
+        function debounce(fn, delay) {
+            let timeoutId;
+            return (...args) => {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => fn(...args), delay);
+            };
+        }
+
+        // 700ms間、入力が止まったら render を実行する
+        const debouncedRender = debounce(render, 700);
+
+        editor.session.on('change', debouncedRender);
         render();
 
     </script>
