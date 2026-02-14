@@ -471,6 +471,10 @@
         const darkHref =
             "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.0/styles/github-dark.min.css";
 
+        const truncateWithEllipsis = (text, maxLength = 100) => {
+            return text.substring(0, maxLength) + (text.length > maxLength ? '...' : '');
+        };
+
         // Editor Settings
         const editor = ace.edit("editor")
         editor.session.setMode("ace/mode/markdown");
@@ -484,7 +488,7 @@
                 const currentContent = editor.getValue();
                 if (currentContent !== content) {
                     if (content !== null) {
-                        const confirmResult = confirm('ローカルストレージに内容を保存しようとしています。現在の内容は上書きされますが続行しますか？');
+                        const confirmResult = confirm('ローカルストレージに内容を保存しようとしています。現在のローカルストレージの内容は上書きされますが続行しますか？\n\n現在のローカルストレージの内容:\n' + truncateWithEllipsis(content));
                         if (!confirmResult) {
                             return;
                         }
@@ -503,7 +507,7 @@
                 if (content !== null) {
                     const currentContent = editor.getValue();
                     if (currentContent !== "" && currentContent !== content) {
-                        const confirmResult = confirm('ローカルストレージから内容を読み込もうとしています。現在の内容は失われますが続行しますか？');
+                        const confirmResult = confirm('ローカルストレージから内容を読み込もうとしています。現在のローカルストレージの内容は失われますが続行しますか？\n\n現在のローカルストレージの内容:\n' + truncateWithEllipsis(content));
                         if (!confirmResult) {
                             return;
                         }
@@ -522,7 +526,7 @@
             exec: function (editor) {
                 const content = localStorage.getItem('content');
                 if (content !== null) {
-                    const confirmResult = confirm('ローカルストレージの内容を削除しようとしています。続行しますか？');
+                    const confirmResult = confirm('ローカルストレージの内容を削除しようとしています。続行しますか？\n\n現在のローカルストレージの内容:\n' + truncateWithEllipsis(content));
                     if (confirmResult) {
                         localStorage.removeItem('content');
                         alert('ローカルストレージの内容を削除しました。');
