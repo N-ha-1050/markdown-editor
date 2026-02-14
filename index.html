@@ -537,6 +537,59 @@
             },
             readOnly: true
         })
+        editor.commands.addCommand({
+            name: 'newFile',
+            bindKey: { win: 'Ctrl-M', mac: 'Command-M' },
+            exec: function (editor) {
+                const currentContent = editor.getValue();
+                if (currentContent !== "") {
+                    const confirmResult = confirm('エディターの内容をリセットしようとしています。現在の内容は失われますが続行しますか？');
+                    if (!confirmResult) {
+                        return;
+                    }
+                }
+                editor.setValue("", -1);
+            },
+            readOnly: false
+        })
+        editor.commands.addCommand({
+            name: 'saveFile',
+            bindKey: { win: 'Ctrl-Shift-S', mac: 'Command-Shift-S' },
+            exec: async function (editor) {
+                const content = editor.getValue();
+                const blob = new Blob([content], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const hast = await markHastProcessor.process(content);
+                const title = hast.data.matter && hast.data.matter.title ? hast.data.matter.title : "notitle";
+                a.href = url;
+                a.download = `${title}.md`;
+                a.click();
+                URL.revokeObjectURL(url);
+            },
+            readOnly: false
+        })
+        editor.commands.addCommand({
+            name: "loadFile",
+            bindKey: { win: "Ctrl-Shift-O", mac: "Command-Shift-O" },
+            exec: function (editor) {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.md, .markdown, text/markdown, text/plain';
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = e => {
+                            const content = e.target.result;
+                            editor.setValue(content, -1);
+                        };
+                        reader.readAsText(file);
+                    }
+                };
+                input.click();
+            },
+        })
 
         // ダークモード対応
         const highlightThemeLink = document.getElementById("highlight-theme");
