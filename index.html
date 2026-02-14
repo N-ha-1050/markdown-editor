@@ -734,17 +734,17 @@
             .use(remarkGithub, {
                 repository: "N-ha-1050/N-ha-1050",
             })
-            .use(remarkToc, { heading: "目次" })
+            .use(remarkToc, { heading: "目次", prefix: "user-content-" })
             .use(remarkBreaks)
             .use(remarkDefinitionList)
             .use(remarkCodeTitles)
             .use(remarkMath)
             .use(remarkCjkFriendly)
             .use(remarkCjkFriendlyGfmStrikethrough)
-            .use(remarkFlexibleToc)
+            .use(remarkFlexibleToc, { prefix: "user-content-" })
             .use(remarkImageAttributes)
-            .use(remarkRehype, { handlers: { ...defListHastHandlers }, footnoteLabel: "脚注", clobberPrefix: "" })
-            .use(rehypeSlug)
+            .use(remarkRehype, { handlers: { ...defListHastHandlers }, footnoteLabel: "脚注" })
+            .use(rehypeSlug, { prefix: "user-content-" })
             .use(rehypePreLanguage, "data-language")
             .use(rehypeSanitize, {
                 ...defaultSchema,
@@ -773,7 +773,7 @@
             .use(remarkGithub, {
                 repository: "N-ha-1050/N-ha-1050",
             })
-            .use(remarkToc, { heading: "目次" })
+            .use(remarkToc, { heading: "目次", prefix: "user-content-" })
             .use(remarkBreaks)
             .use(remarkDefinitionList)
             .use(remarkMath)
