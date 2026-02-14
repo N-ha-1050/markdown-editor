@@ -507,7 +507,7 @@
                 if (content !== null) {
                     const currentContent = editor.getValue();
                     if (currentContent !== "" && currentContent !== content) {
-                        const confirmResult = confirm('ローカルストレージから内容を読み込もうとしています。現在のローカルストレージの内容は失われますが続行しますか？\n\n現在のローカルストレージの内容:\n' + truncateWithEllipsis(content));
+                        const confirmResult = confirm('ローカルストレージから内容を読み込もうとしています。現在の内容は失われますが続行しますか？\n\n現在のローカルストレージの内容:\n' + truncateWithEllipsis(content));
                         if (!confirmResult) {
                             return;
                         }
