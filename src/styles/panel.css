@@ -1,0 +1,110 @@
+/* Section5: Panel */
+#panel {
+  position: absolute;
+  box-sizing: border-box;
+
+  top: 85vh;
+  left: 0;
+  width: 100vw;
+  height: 15vh;
+
+  background-color: white;
+  color: black;
+  border: 1px solid dimgray;
+}
+
+#panel-tabs {
+  box-sizing: border-box;
+
+  height: 5vh;
+  width: fit-content;
+  padding: 0 1rem;
+
+  display: flex;
+}
+
+#panel .panel-content {
+  box-sizing: border-box;
+
+  width: 100vw;
+  height: 10vh;
+
+  border: none;
+
+  display: none;
+}
+
+#panel textarea.panel-content {
+  padding: 1rem;
+  resize: none;
+
+  background-color: white;
+  color: black;
+}
+
+/* タブとパネルの対応関係 */
+#panel-tabs:has(input#panel-tabs-lint-input:checked) ~ #panel-lint,
+#panel-tabs:has(input#panel-tabs-metadata-input:checked) ~ #panel-metadata,
+#panel-tabs:has(input#panel-tabs-plaintext-input:checked) ~ #panel-plaintext {
+  display: block;
+}
+
+/* ラジオボタンを非表示にする（display:none はアクセシビリティの観点から使用しない） */
+#panel-tabs input.panel-tabs-item-input {
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+/* タブのラベル */
+#panel-tabs .panel-tabs-item {
+  font-size: 2vh;
+  padding: 0;
+  margin: 1vh;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  color: gray;
+}
+
+/* ホバー時: 文字色のみ変更 */
+#panel-tabs .panel-tabs-item:hover {
+  cursor: pointer;
+  color: black;
+}
+
+/* キーボードによるフォーカス時: アウトラインを表示 */
+#panel-tabs:has(input.panel-tabs-item-input:focus-visible) {
+  outline: 2px solid skyblue;
+}
+
+/* 選択時: 下線と文字色を変更 */
+#panel-tabs .panel-tabs-item:has(input.panel-tabs-item-input:checked) {
+  color: black;
+  border-bottom: 1px solid skyblue;
+}
+
+@media (prefers-color-scheme: dark) {
+  #panel {
+    background-color: black;
+    color: white;
+  }
+
+  #panel textarea.panel-content {
+    background-color: black;
+    color: white;
+  }
+
+  #panel-tabs .panel-tabs-item:hover {
+    color: white;
+  }
+
+  #panel-tabs .panel-tabs-item:has(input.panel-tabs-item-input:checked) {
+    color: white;
+  }
+}

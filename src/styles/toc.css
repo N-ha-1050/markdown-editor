@@ -1,0 +1,26 @@
+/* Section6: TOC */
+#toc {
+  position: absolute;
+  box-sizing: border-box;
+
+  top: 10vh;
+  left: 90vw;
+  width: 10vw;
+  height: 75vh;
+  padding: 0;
+
+  /* background-color: black; */
+  border: 1px solid dimgray;
+
+  overflow-wrap: anywhere;
+  overflow-y: auto;
+}
+
+#toc ul {
+  list-style-type: none;
+  padding-left: 0.5rem;
+}
+
+#toc ul li {
+  margin-top: 0.5rem;
+}

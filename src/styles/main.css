@@ -1,0 +1,78 @@
+@import "./title.css"; /* Section1: Title */
+@import "./editor.css"; /* Section2: Editor */
+@import "./info.css"; /* Section3: Info */
+@import "./preview.css"; /* Section4: Preview */
+@import "./panel.css"; /* Section5: Panel */
+@import "./toc.css"; /* Section6: TOC */
+@import "./modal.css"; /* Section7: Modal */
+
+@import "./highlight.css";
+
+:root {
+  /* Fonts */
+  --font-sans:
+    "Noto Sans Variable", "Noto Sans JP Variable", "Noto Emoji Variable",
+    ui-sans-serif, sans-serif;
+  --font-serif:
+    "Noto Serif Variable", "Noto Serif JP Variable", "Noto Emoji Variable",
+    ui-serif, serif;
+  --font-mono: "Noto Sans Mono Variable", ui-monospace, monospace;
+
+  --color-code-background: lightgray;
+  --color-text-weak: black;
+  --color-inserted-line: #f0fff4;
+  --color-deleted-line: #ffeef0;
+  --color-highlighted-line: lightskyblue;
+  --color-highlighted-line-indicator: blue;
+
+  --color-code-titlebar: dodgerblue;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    background-color: #002244;
+    color: white;
+
+    --color-code-background: darkgray;
+    --color-text-weak: white;
+    --color-inserted-line: #033a16;
+    --color-deleted-line: #67060c;
+    --color-highlighted-line: midnightblue;
+  }
+
+  a {
+    color: lightblue;
+  }
+
+  a:visited {
+    color: violet;
+  }
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+textarea,
+pre,
+code {
+  font-family: var(--font-mono);
+}

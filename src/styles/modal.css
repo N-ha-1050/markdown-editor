@@ -1,0 +1,25 @@
+/* Section7: Modal */
+#modal dialog {
+  border-radius: 0.5rem;
+}
+
+#modal button:focus-visible {
+  outline: 2px solid skyblue;
+}
+
+#modal button.modal-submit-button {
+  background-color: dodgerblue;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+  margin-right: 1rem;
+}
+
+#modal button.modal-cancel-button {
+  background-color: dimgray;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+}

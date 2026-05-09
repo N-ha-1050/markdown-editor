@@ -1,0 +1,118 @@
+/* highlight.js styles */
+
+.parent-container-of-pre {
+  display: grid;
+  /* in order { overflow-x: auto; } works in child <pre> */
+}
+
+pre,
+pre code {
+  background-color: var(--color-code-background);
+
+  direction: ltr;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  line-height: 1.2;
+  tab-size: 2;
+  hyphens: none;
+}
+
+pre {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-text-weak);
+  border-radius: 5px;
+
+  overflow-x: auto;
+}
+
+pre > code {
+  float: left;
+  min-width: 100%;
+}
+
+.code-line {
+  min-width: 100%;
+  padding-left: 12px;
+  padding-right: 12px;
+  margin-left: -12px;
+  margin-right: -12px;
+  border-left: 4px solid transparent;
+  /* prepare for highlighted code-lines */
+
+  display: inline-block;
+}
+
+.code-line.inserted {
+  background-color: var(--color-inserted-line);
+  /* inserted code-line (+) */
+}
+
+.code-line.deleted {
+  background-color: var(--color-deleted-line);
+  /* deleted code-line (-) */
+}
+
+.highlighted-code-line {
+  background-color: var(--color-highlighted-line);
+  border-left: 4px solid var(--color-highlighted-line-indicator);
+}
+
+.numbered-code-line::before {
+  content: attr(data-line-number);
+
+  margin-left: -8px;
+  margin-right: 16px;
+  width: 1rem;
+  color: var(--color-text-weak);
+  text-align: right;
+
+  display: inline-block;
+}
+
+/* custom highlight.js settings */
+
+.remark-code-container {
+  position: relative;
+}
+
+.remark-code-container pre {
+  margin-top: 0;
+}
+
+pre code.hljs {
+  box-sizing: border-box;
+}
+
+pre::before {
+  position: absolute;
+  content: attr(data-language);
+  background-color: dodgerblue;
+  padding: 0.25rem;
+  right: 17px;
+}
+
+.code-line {
+  margin-left: -16px;
+  margin-right: -16px;
+  border-right: 4px solid transparent;
+}
+
+.remark-code-title {
+  padding: 2px 0 4px 1rem;
+  color: var(--color-text-weak);
+  font-size: 95%;
+  background-color: var(--color-code-titlebar);
+  border: 1px solid var(--color-text-weak);
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+
+.remark-code-title + pre {
+  border-top: none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+}

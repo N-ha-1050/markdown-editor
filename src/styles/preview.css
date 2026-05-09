@@ -1,0 +1,23 @@
+/* Section4: Preview */
+#preview {
+  position: absolute;
+  box-sizing: border-box;
+
+  top: 10vh;
+  left: 50vw;
+  width: 40vw;
+  height: 75vh;
+
+  border: 1px solid dimgray;
+  overflow: auto;
+  padding: 1rem;
+  white-space: nowrap;
+}
+
+#preview a {
+  text-decoration: none;
+}
+
+#preview a:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,7 @@
+/* Section2: Editor */
+#editor {
+  position: absolute;
+  box-sizing: border-box;
+  width: 50vw;
+  height: 70vh;
+}

@@ -17,3 +17,14 @@ export const DragAndDropEventNames = [
   "dragover",
   "drop",
 ] as const satisfies (keyof HTMLElementEventMap)[]
+
+/**
+ * タグ名とIDを指定して要素を取得し、型を自動推論する関数
+ */
+export function getTypedElementById<K extends keyof HTMLElementTagNameMap>(
+  tagName: K,
+  id: string,
+): HTMLElementTagNameMap[K] | null {
+  // 実行時は文字列として結合して検索
+  return document.querySelector<HTMLElementTagNameMap[K]>(`${tagName}#${id}`)
+}

@@ -1,0 +1,52 @@
+/* Section3: Info */
+#info {
+  position: absolute;
+  box-sizing: border-box;
+
+  top: 80vh;
+  width: 50vw;
+  height: 5vh;
+  padding: 0 1rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+#info button.info-item {
+  border: none;
+  background: transparent;
+}
+
+#info .info-item {
+  box-sizing: border-box;
+
+  font-size: 2vh;
+  margin: 0;
+  padding: 1vh;
+}
+
+#info .info-item:hover {
+  background-color: lightgray;
+  cursor: pointer;
+}
+
+#info .info-item:focus-visible {
+  z-index: 1;
+  outline: 2px solid skyblue;
+}
+
+@media (prefers-color-scheme: dark) {
+  #info {
+    background-color: black;
+    color: white;
+  }
+
+  #info .info-item {
+    color: white;
+  }
+
+  #info .info-item:hover {
+    background-color: dimgray;
+  }
+}

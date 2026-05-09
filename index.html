@@ -5,135 +5,141 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Markdown Editor</title>
+    <meta
+      name="description"
+      content="A simple markdown editor built with TypeScript and Vite."
+    >
     <style id="highlight-style"></style>
   </head>
   <body>
-    <!-- Section1: Title -->
-    <div id="title">
-      <h1>Markdown Editor</h1>
-    </div>
+    <main id="app" aria-label="Markdown Editor">
+      <!-- Section1: Title -->
+      <header id="title">
+        <h1>Markdown Editor</h1>
+      </header>
 
-    <!-- Section2: Editor -->
-    <div id="editor"></div>
+      <!-- Section2: Editor -->
+      <div id="editor"></div>
 
-    <!-- Section3: Info -->
-    <div id="info">
-      <button
-        id="info-position"
-        class="info-item"
-        type="button"
-        aria-label="カーソル位置"
-      ></button>
-      <button
-        id="info-tab"
-        class="info-item"
-        type="button"
-        aria-label="タブ"
-      ></button>
-    </div>
-
-    <!-- Section4: Preview -->
-    <div id="preview"></div>
-
-    <!-- Section5: Panel -->
-    <div id="panel">
-      <div id="panel-tabs">
-        <label
-          for="panel-tabs-lint-input"
-          id="panel-tabs-lint"
-          class="panel-tabs-item"
-        >
-          <input
-            type="radio"
-            id="panel-tabs-lint-input"
-            class="panel-tabs-item-input"
-            name="panel-tabs"
-            checked
-          >Lint
-        </label>
-        <label
-          for="panel-tabs-metadata-input"
-          id="panel-tabs-metadata"
-          class="panel-tabs-item"
-        >
-          <input
-            type="radio"
-            id="panel-tabs-metadata-input"
-            class="panel-tabs-item-input"
-            name="panel-tabs"
-          >Metadata
-        </label>
-        <label
-          for="panel-tabs-plaintext-input"
-          id="panel-tabs-plaintext"
-          class="panel-tabs-item"
-        >
-          <input
-            type="radio"
-            id="panel-tabs-plaintext-input"
-            class="panel-tabs-item-input"
-            name="panel-tabs"
-          >Plain Text
-        </label>
+      <!-- Section3: Info -->
+      <div id="info">
+        <button
+          id="info-position"
+          class="info-item"
+          type="button"
+          aria-label="カーソル位置"
+        ></button>
+        <button
+          id="info-tab"
+          class="info-item"
+          type="button"
+          aria-label="タブ"
+        ></button>
       </div>
-      <textarea
-        name="panel-lint"
-        id="panel-lint"
-        class="panel-content"
-        aria-labelledby="panel-tabs-lint"
-        disabled
-      ></textarea>
-      <textarea
-        name="panel-metadata"
-        id="panel-metadata"
-        class="panel-content"
-        aria-labelledby="panel-tabs-metadata"
-        disabled
-      ></textarea>
-      <textarea
-        name="panel-plaintext"
-        id="panel-plaintext"
-        class="panel-content"
-        aria-labelledby="panel-tabs-plaintext"
-        disabled
-      ></textarea>
-    </div>
 
-    <!-- Section6: Toc -->
-    <div id="toc">
-      <h2>目次</h2>
-      <div id="toc-list"></div>
-    </div>
+      <!-- Section4: Preview -->
+      <div id="preview"></div>
 
-    <!-- Section7: Dialog -->
-    <div id="dialog">
+      <!-- Section5: Panel -->
+      <footer id="panel">
+        <div id="panel-tabs">
+          <label
+            for="panel-tabs-lint-input"
+            id="panel-tabs-lint"
+            class="panel-tabs-item"
+          >
+            <input
+              type="radio"
+              id="panel-tabs-lint-input"
+              class="panel-tabs-item-input"
+              name="panel-tabs"
+              checked
+            >Lint
+          </label>
+          <label
+            for="panel-tabs-metadata-input"
+            id="panel-tabs-metadata"
+            class="panel-tabs-item"
+          >
+            <input
+              type="radio"
+              id="panel-tabs-metadata-input"
+              class="panel-tabs-item-input"
+              name="panel-tabs"
+            >Metadata
+          </label>
+          <label
+            for="panel-tabs-plaintext-input"
+            id="panel-tabs-plaintext"
+            class="panel-tabs-item"
+          >
+            <input
+              type="radio"
+              id="panel-tabs-plaintext-input"
+              class="panel-tabs-item-input"
+              name="panel-tabs"
+            >Plain Text
+          </label>
+        </div>
+        <textarea
+          name="panel-lint"
+          id="panel-lint"
+          class="panel-content"
+          aria-labelledby="panel-tabs-lint"
+          disabled
+        ></textarea>
+        <textarea
+          name="panel-metadata"
+          id="panel-metadata"
+          class="panel-content"
+          aria-labelledby="panel-tabs-metadata"
+          disabled
+        ></textarea>
+        <textarea
+          name="panel-plaintext"
+          id="panel-plaintext"
+          class="panel-content"
+          aria-labelledby="panel-tabs-plaintext"
+          disabled
+        ></textarea>
+      </footer>
+
+      <!-- Section6: Toc -->
+      <div id="toc">
+        <h2>目次</h2>
+        <div id="toc-list"></div>
+      </div>
+    </main>
+
+    <!-- Section7: Modal -->
+    <div id="modal">
       <dialog
-        id="dialog-position"
+        id="modal-position"
         aria-label="カーソル位置変更ダイアログ"
         closedby="any"
       >
         <form>
           <p>
-            <label for="dialog-position-input"
+            <label for="modal-position-input"
               >カーソル位置を入力してください。</label
             >
             <input
               type="text"
-              id="dialog-position-input"
+              id="modal-position-input"
               autofocus
               placeholder="行:列 (例: 3:5)"
             >
           </p>
           <div>
             <button
-              id="dialog-position-submit"
-              class="dialog-submit-button"
+              id="modal-position-submit"
+              class="modal-submit-button"
               type="submit"
             >
               確認
             </button>
             <button
-              class="dialog-cancel-button"
+              class="modal-cancel-button"
               formmethod="dialog"
               type="submit"
             >
@@ -143,35 +149,29 @@
         </form>
       </dialog>
       <dialog
-        id="dialog-tab"
+        id="modal-tab"
         aria-label="タブサイズ変更ダイアログ"
         closedby="any"
       >
         <form>
           <p>
-            <input type="checkbox" id="dialog-tab-check">
-            <label for="dialog-tab-check">スペースによるインデント</label>
+            <input type="checkbox" id="modal-tab-check">
+            <label for="modal-tab-check">スペースによるインデント</label>
           </p>
           <p>
-            <label for="dialog-tab-input">タブサイズを入力してください。</label>
-            <input
-              type="number"
-              id="dialog-tab-input"
-              min="1"
-              max="8"
-              autofocus
-            >
+            <label for="modal-tab-input">タブサイズを入力してください。</label>
+            <input type="number" id="modal-tab-input" min="1" max="8" autofocus>
           </p>
           <div>
             <button
-              id="dialog-tab-submit"
-              class="dialog-submit-button"
+              id="modal-tab-submit"
+              class="modal-submit-button"
               type="submit"
             >
               確認
             </button>
             <button
-              class="dialog-cancel-button"
+              class="modal-cancel-button"
               formmethod="dialog"
               type="submit"
             >
