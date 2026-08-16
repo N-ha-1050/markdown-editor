@@ -7,8 +7,11 @@ import "@fontsource-variable/noto-serif-jp/wght.css"
 import "@fontsource-variable/noto-sans-mono/wght.css"
 import "@fontsource-variable/noto-emoji/wght.css"
 
+import "monaco-editor/esm/vs/nls/lang/ja.js"
+import * as monaco from "monaco-editor"
+
 import reporter from "vfile-reporter"
-import { editor } from "./editor"
+import { createMonacoEditor } from "./editor"
 import {
   handleEditorDragoverAndDrop,
   handleEditorDrop,
@@ -19,14 +22,19 @@ import { getHighlightStyle } from "./markdown/highlight-style"
 import { buildTocDom } from "./markdown/toc"
 import { DragAndDropEventNames, debounce, getTypedElementById } from "./utils"
 
-function setInfoPositionText(infoPositionButton: HTMLButtonElement) {
-  const cursorPosition = editor.getCursorPosition()
-  infoPositionButton.textContent = `行: ${cursorPosition.row + 1}, 列: ${
-    cursorPosition.column + 1
-  }`
+function setInfoPositionText(
+  editor: monaco.editor.IStandaloneCodeEditor,
+  infoPositionButton: HTMLButtonElement,
+) {
+  const cursorPosition = editor.getPosition()
+  if (!cursorPosition) return
+  infoPositionButton.textContent = `行: ${cursorPosition.lineNumber}, 列: ${cursorPosition.column}`
 }
 
-function handleModalPositionDialogClose(ev: Event) {
+function handleModalPositionDialogClose(
+  editor: monaco.editor.IStandaloneCodeEditor,
+  ev: Event,
+) {
   const dialog = ev.currentTarget
   if (!(dialog instanceof HTMLDialogElement)) return
 
@@ -38,28 +46,43 @@ function handleModalPositionDialogClose(ev: Event) {
 
   const parts = returnValue
     .split(":")
-    .map((value) => parseInt(value.trim(), 10) - 1)
+    .map((value) => parseInt(value.trim(), 10))
 
-  const row = parts[0] && !Number.isNaN(parts[0]) ? parts[0] : 0
-  const column = parts[1] && !Number.isNaN(parts[1]) ? parts[1] : 0
+  const validPosition = (value: unknown): number =>
+    typeof value === "number" && !Number.isNaN(value) && value > 0 ? value : 1
 
-  editor.gotoLine(row + 1, column, true)
+  const position: monaco.IPosition = {
+    lineNumber: validPosition(parts[0]),
+    column: validPosition(parts[1]),
+  }
+  editor.setPosition(position)
+  editor.revealPositionInCenterIfOutsideViewport(
+    position,
+    monaco.editor.ScrollType.Smooth,
+  )
   editor.focus()
 }
 
 function setInfoTabText(
+  editor: monaco.editor.IStandaloneCodeEditor,
   infoTabButton: HTMLButtonElement,
   dialogTabInput: HTMLInputElement,
   dialogCheckInput: HTMLInputElement,
 ) {
-  const tabSize = editor.session.getTabSize()
-  const useSoftTabs = editor.session.getUseSoftTabs()
+  const model = editor.getModel()
+  if (!model) return
+
+  const { tabSize, insertSpaces: useSoftTabs } = model.getOptions()
+
   infoTabButton.textContent = `${useSoftTabs ? "スペース" : "タブ"}: ${tabSize}`
   dialogTabInput.value = tabSize.toString()
   dialogCheckInput.checked = useSoftTabs
 }
 
-function handleModalTabDialogClose(ev: Event) {
+function handleModalTabDialogClose(
+  editor: monaco.editor.IStandaloneCodeEditor,
+  ev: Event,
+) {
   const dialog = ev.currentTarget
   if (!(dialog instanceof HTMLDialogElement)) return
 
@@ -74,17 +97,22 @@ function handleModalTabDialogClose(ev: Event) {
     .map((value) => value.trim())
 
   const useSoftTabs = useSoftTabsValue === "true"
-  editor.session.setUseSoftTabs(useSoftTabs)
-
   const tabSize = parseInt(tabSizeValue, 10)
+
+  const model = editor.getModel()
+  if (!model) return
+
   if (!Number.isNaN(tabSize) && tabSize > 0) {
-    editor.session.setTabSize(tabSize)
+    model.updateOptions({ tabSize: tabSize, insertSpaces: useSoftTabs })
+  } else {
+    model.updateOptions({ insertSpaces: useSoftTabs })
   }
 
   editor.focus()
 }
 
 async function renderWithElements(
+  editor: monaco.editor.IStandaloneCodeEditor,
   previewDiv: HTMLDivElement,
   panelLintTextarea: HTMLTextAreaElement,
   panelMetadataTextarea: HTMLTextAreaElement,
@@ -156,21 +184,28 @@ function main() {
   const highlightStyle = getTypedElementById("style", "highlight-style")
   if (!highlightStyle) return
 
+  // エディタの初期化
+  const editor = createMonacoEditor(editorDiv)
+
   // ドラッグアンドドロップ対応
   DragAndDropEventNames.forEach((eventName) => {
     editorDiv.addEventListener(eventName, handleEditorDragoverAndDrop)
   })
-  editorDiv.addEventListener("drop", handleEditorDrop)
+  editorDiv.addEventListener("drop", (ev: DragEvent) =>
+    handleEditorDrop(editor, ev),
+  )
 
   // カーソル位置表示と移動
-  setInfoPositionText(infoPositionButton)
+  setInfoPositionText(editor, infoPositionButton)
   infoPositionButton.addEventListener("click", () =>
     modalPositionDialog.showModal(),
   )
-  editor.session.selection.on("changeCursor", () => {
-    setInfoPositionText(infoPositionButton)
-  })
-  modalPositionDialog.addEventListener("close", handleModalPositionDialogClose)
+  editor.onDidChangeCursorPosition(() =>
+    setInfoPositionText(editor, infoPositionButton),
+  )
+  modalPositionDialog.addEventListener("close", (ev: Event) =>
+    handleModalPositionDialogClose(editor, ev),
+  )
   modalPositionSubmitButton.addEventListener("click", (ev) => {
     ev.preventDefault()
     modalPositionDialog.close(modalPositionInput.value)
@@ -178,19 +213,14 @@ function main() {
   })
 
   // インデント表示と設定
-  setInfoTabText(infoTabButton, modalTabInput, modalTabCheckInput)
-  editor.session.on("changeTabSize", () => {
-    setInfoTabText(infoTabButton, modalTabInput, modalTabCheckInput)
-  })
+  setInfoTabText(editor, infoTabButton, modalTabInput, modalTabCheckInput)
+  editor.onDidChangeModelOptions(() =>
+    setInfoTabText(editor, infoTabButton, modalTabInput, modalTabCheckInput),
+  )
   infoTabButton.addEventListener("click", () => modalTabDialog.showModal())
-  modalTabDialog.addEventListener("close", handleModalTabDialogClose)
-  modalTabDialog.addEventListener("close", (ev) => {
-    const dialog = ev.currentTarget
-    if (!(dialog instanceof HTMLDialogElement)) return
-    const returnValue = dialog.returnValue
-    if (!returnValue) return
-    setInfoTabText(infoTabButton, modalTabInput, modalTabCheckInput)
-  })
+  modalTabDialog.addEventListener("close", (ev: Event) =>
+    handleModalTabDialogClose(editor, ev),
+  )
   modalTabSubmitButton.addEventListener("click", (ev) => {
     ev.preventDefault()
     const useSoftTabs = modalTabCheckInput.checked
@@ -201,7 +231,7 @@ function main() {
   // ダークモード対応
   const media = window.matchMedia("(prefers-color-scheme: dark)")
   const setTheme = (mediaMatch: boolean) => {
-    editor.setTheme(getEditorTheme(mediaMatch))
+    monaco.editor.setTheme(getEditorTheme(mediaMatch))
     highlightStyle.textContent = getHighlightStyle(mediaMatch)
   }
   setTheme(media.matches)
@@ -217,6 +247,7 @@ function main() {
   // レンダリング
   const render = () => {
     renderWithElements(
+      editor,
       previewDiv,
       panelLintTextarea,
       panelMetadataTextarea,
@@ -226,7 +257,7 @@ function main() {
   }
   const debouncedRender = debounce(render, 700)
 
-  editor.session.on("change", debouncedRender)
+  editor.onDidChangeModelContent(debouncedRender)
   render()
 }
 

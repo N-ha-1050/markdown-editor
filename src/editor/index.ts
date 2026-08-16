@@ -1,18 +1,24 @@
-import ace from "ace-builds"
-import "ace-builds/src-noconflict/mode-markdown"
-import "ace-builds/src-noconflict/keybinding-vscode"
-import "ace-builds/src-noconflict/theme-github"
-import "ace-builds/src-noconflict/theme-github_dark"
-
+import * as monaco from "monaco-editor"
+import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker"
 import { commands } from "./commands"
 
-// Ace Editor のインスタンス
-export const editor = ace.edit("editor", {
-  mode: "ace/mode/markdown",
-  useSoftTabs: true,
-  keyboardHandler: "ace/keyboard/vscode",
-  theme: "ace/theme/github",
-})
+self.MonacoEnvironment = { getWorker: () => new editorWorker() }
 
-// コマンド
-editor.commands.addCommands(commands)
+export const createMonacoEditor = (editorDiv: HTMLDivElement) => {
+  const editor = monaco.editor.create(editorDiv, {
+    language: "markdown",
+    automaticLayout: true,
+  })
+
+  // コマンドの登録
+  commands.forEach(({ keybinding, handler, id, label }) => {
+    editor.addAction({
+      id,
+      label,
+      keybindings: [keybinding],
+      run: () => handler(editor),
+    })
+  })
+
+  return editor
+}

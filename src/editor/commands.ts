@@ -1,14 +1,19 @@
-import type { Editor } from "ace-builds"
-import type { Command } from "ace-builds-internal/keyboard/hash_handler"
+import * as monaco from "monaco-editor"
 import { markHastProcessor } from "../markdown"
 import { truncateWithEllipsis } from "../utils"
 
 // コマンド
-export const commands = [
+export const commands: {
+  id: string
+  label: string
+  keybinding: number
+  handler: (editor: monaco.editor.ICodeEditor) => void
+}[] = [
   {
-    name: "saveLocalstorage",
-    bindKey: { win: "Ctrl-S", mac: "Command-S" },
-    exec: (editor: Editor) => {
+    id: "saveLocalstorage",
+    label: "Save to LocalStorage",
+    keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
+    handler: (editor: monaco.editor.ICodeEditor) => {
       const localStorageContent = localStorage.getItem("content")
       const editorContent = editor.getValue()
       if (editorContent !== localStorageContent) {
@@ -27,9 +32,10 @@ export const commands = [
     },
   },
   {
-    name: "loadLocalstorage",
-    bindKey: { win: "Ctrl-O", mac: "Command-O" },
-    exec: (editor: Editor) => {
+    id: "loadLocalstorage",
+    label: "Load from LocalStorage",
+    keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyO,
+    handler: (editor: monaco.editor.ICodeEditor) => {
       const localStorageContent = localStorage.getItem("content")
       if (localStorageContent !== null) {
         const editorContent = editor.getValue()
@@ -42,7 +48,7 @@ export const commands = [
             return
           }
         }
-        editor.setValue(localStorageContent, -1)
+        editor.setValue(localStorageContent)
         alert("ローカルストレージから内容を読み込みました。")
       } else {
         alert("ローカルストレージに保存された内容が見つかりません。")
@@ -50,9 +56,10 @@ export const commands = [
     },
   },
   {
-    name: "clearLocalstorage",
-    bindKey: { win: "Ctrl-E", mac: "Command-E" },
-    exec: () => {
+    id: "clearLocalstorage",
+    label: "Clear LocalStorage",
+    keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyE,
+    handler: () => {
       const localStorageContent = localStorage.getItem("content")
       if (localStorageContent !== null) {
         const confirmResult = confirm(
@@ -70,9 +77,10 @@ export const commands = [
     },
   },
   {
-    name: "newFile",
-    bindKey: { win: "Ctrl-M", mac: "Command-M" },
-    exec: (editor: Editor) => {
+    id: "newFile",
+    label: "Create New File",
+    keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyM,
+    handler: (editor: monaco.editor.ICodeEditor) => {
       const editorContent = editor.getValue()
       if (editorContent !== "") {
         const confirmResult = confirm(
@@ -82,13 +90,15 @@ export const commands = [
           return
         }
       }
-      editor.setValue("", -1)
+      editor.setValue("")
     },
   },
   {
-    name: "saveFile",
-    bindKey: { win: "Ctrl-Shift-S", mac: "Command-Shift-S" },
-    exec: async (editor: Editor) => {
+    id: "saveFile",
+    label: "Save File",
+    keybinding:
+      monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyS,
+    handler: async (editor: monaco.editor.ICodeEditor) => {
       const editorContent = editor.getValue()
 
       const blob = new Blob([editorContent], { type: "text/markdown" })
@@ -109,9 +119,11 @@ export const commands = [
     },
   },
   {
-    name: "loadFile",
-    bindKey: { win: "Ctrl-Shift-O", mac: "Command-Shift-O" },
-    exec: (editor: Editor) => {
+    id: "loadFile",
+    label: "Load File",
+    keybinding:
+      monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyO,
+    handler: (editor: monaco.editor.ICodeEditor) => {
       const input = document.createElement("input")
       input.type = "file"
       input.accept = ".md, .markdown, text/markdown, text/plain"
@@ -127,7 +139,7 @@ export const commands = [
         reader.onload = (ev) => {
           const result = ev.target?.result
           if (typeof result === "string") {
-            editor.setValue(result, -1)
+            editor.setValue(result)
           }
         }
         reader.readAsText(file)
@@ -135,4 +147,4 @@ export const commands = [
       input.click()
     },
   },
-] as const satisfies Command[]
+]
