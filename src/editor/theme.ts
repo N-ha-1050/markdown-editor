@@ -1,3 +1,3 @@
 // テーマのダークモード対応
 export const getEditorTheme = (mediaMatch: boolean) =>
-  mediaMatch ? "ace/theme/github_dark" : "ace/theme/github"
+  mediaMatch ? "vs-dark" : "vs-light"

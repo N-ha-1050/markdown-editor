@@ -237,11 +237,11 @@ author: "N_ha"
 
    `pnpm add @fontsource-variable/noto-emoji`
 
-7. Ace Editor のインストール
+7. Monaco Editor のインストール
 
-   <https://ace.c9.io/>
+   <https://github.com/microsoft/monaco-editor>
 
-   `pnpm add ace-builds`
+   `pnpm add monaco-editor`
 
 8. Remark 関連のインストール
 

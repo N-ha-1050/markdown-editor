@@ -1,11 +1,36 @@
-import { editor } from "."
+import type * as monaco from "monaco-editor"
 
 export function handleEditorDragoverAndDrop(ev: DragEvent) {
   ev.preventDefault()
   ev.stopPropagation()
 }
 
-export function handleEditorDrop(ev: DragEvent) {
+function editorInsertText(
+  editor: monaco.editor.IStandaloneCodeEditor,
+  text: string,
+) {
+  const cursorPosition = editor.getPosition()
+  if (!cursorPosition) return
+  const model = editor.getModel()
+  if (!model) return
+
+  // Apply edit via Monaco editor API to preserve undo/redo and selection.
+  const range = {
+    startLineNumber: cursorPosition.lineNumber,
+    startColumn: cursorPosition.column,
+    endLineNumber: cursorPosition.lineNumber,
+    endColumn: cursorPosition.column,
+  }
+
+  editor.pushUndoStop()
+  editor.executeEdits("drop", [{ range, text, forceMoveMarkers: true }])
+  editor.pushUndoStop()
+}
+
+export function handleEditorDrop(
+  editor: monaco.editor.IStandaloneCodeEditor,
+  ev: DragEvent,
+) {
   const files = ev.dataTransfer?.files
   if (!files) return
   Array.from(files).forEach((file) => {
@@ -17,8 +42,7 @@ export function handleEditorDrop(ev: DragEvent) {
 
         const markdownImage = `\n![${file.name}](${result})\n`
 
-        const cursorPosition = editor.getCursorPosition()
-        editor.session.insert(cursorPosition, markdownImage)
+        editorInsertText(editor, markdownImage)
       }
       reader.readAsDataURL(file)
     } else if (file.type.startsWith("text/")) {
@@ -29,8 +53,7 @@ export function handleEditorDrop(ev: DragEvent) {
 
         const markdownText = `\n${result}\n`
 
-        const cursorPosition = editor.getCursorPosition()
-        editor.session.insert(cursorPosition, markdownText)
+        editorInsertText(editor, markdownText)
       }
       reader.readAsText(file)
     }
